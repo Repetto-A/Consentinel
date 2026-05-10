@@ -3,6 +3,7 @@ import { getIronSession } from "iron-session";
 import { sessionOptions, type SessionData } from "@/lib/auth/session";
 
 const PUBLIC_PATHS = ["/login", "/manifest.json", "/sw.js"];
+const PUBLIC_PAGE_PREFIXES = ["/v/"];
 const PUBLIC_API_PREFIXES = ["/api/auth", "/api/mcp", "/api/step-up/voice"];
 
 export async function middleware(request: NextRequest) {
@@ -10,6 +11,12 @@ export async function middleware(request: NextRequest) {
 
   if (PUBLIC_PATHS.includes(pathname)) return NextResponse.next();
   if (PUBLIC_API_PREFIXES.some((p) => pathname.startsWith(p))) {
+    return NextResponse.next();
+  }
+  if (PUBLIC_PAGE_PREFIXES.some((p) => pathname.startsWith(p))) {
+    // Step-up verification deeplinks. The page resolves the challenge,
+    // figures out the expected username, and redirects to /login with
+    // the right query params if no session is present.
     return NextResponse.next();
   }
 
