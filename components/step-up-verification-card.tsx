@@ -12,7 +12,7 @@ interface StepUpVerificationCardProps {
 export function StepUpVerificationCard({ initialChallenge }: StepUpVerificationCardProps) {
   const [challenge, setChallenge] = useState(initialChallenge);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<"verify" | "reject" | null>(null);
   const [resumedStatus, setResumedStatus] = useState<string | null>(null);
 
   useEffect(() => {
@@ -36,8 +36,20 @@ export function StepUpVerificationCard({ initialChallenge }: StepUpVerificationC
     return () => window.clearInterval(interval);
   }, [challenge.handoffCode, challenge.isTerminal]);
 
+  async function refreshChallenge() {
+    const refreshRes = await fetch(`/api/step-up/verify/${encodeURIComponent(challenge.handoffCode)}`, {
+      cache: "no-store"
+    });
+    if (refreshRes.ok) {
+      const data = (await refreshRes.json()) as { challenge?: StepUpChallengeView };
+      if (data.challenge) {
+        setChallenge(data.challenge);
+      }
+    }
+  }
+
   async function handleVerify() {
-    setBusy(true);
+    setBusy("verify");
     setError(null);
 
     try {
@@ -70,28 +82,45 @@ export function StepUpVerificationCard({ initialChallenge }: StepUpVerificationC
         resumed?: { status?: string };
       };
       setResumedStatus(finished.resumed?.status ?? null);
-
-      const refreshRes = await fetch(`/api/step-up/verify/${encodeURIComponent(challenge.handoffCode)}`, {
-        cache: "no-store"
-      });
-      if (refreshRes.ok) {
-        const data = (await refreshRes.json()) as { challenge?: StepUpChallengeView };
-        if (data.challenge) {
-          setChallenge(data.challenge);
-        }
-      }
+      await refreshChallenge();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
+
+  async function handleReject() {
+    setBusy("reject");
+    setError(null);
+
+    try {
+      const res = await fetch("/api/step-up/passkey/reject", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ challengeId: challenge.challengeId })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "no se pudo rechazar el permiso");
+      }
+
+      await refreshChallenge();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  const isActionable = !challenge.isTerminal;
 
   return (
     <div className="w-full max-w-2xl rounded-3xl border border-border bg-surface p-6 shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
       <div className="flex flex-wrap items-center gap-3">
         <span className="rounded-full border border-border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
-          voice step-up
+          step-up
         </span>
         <span className="rounded-full border border-border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-text">
           {challenge.handoffCode}
@@ -114,29 +143,28 @@ export function StepUpVerificationCard({ initialChallenge }: StepUpVerificationC
           </p>
         ) : null}
         <p className="text-sm text-muted">
-          Te enviamos este link por WhatsApp y la llamada telefónica valida tu intención antes de destrabar la passkey.
+          Confirmá con tu passkey si querés autorizar esta operación. Si no fuiste vos quien la pidió, rechazala.
         </p>
       </div>
 
       <div className="mt-6 rounded-2xl border border-border bg-bg/60 p-4">
-        {challenge.status === "pending" ? (
-          <p className="text-sm text-stepup">
-            Estamos esperando que confirmes verbalmente la llamada. Cuando llegue ese sí, esta misma pantalla habilita la passkey.
-          </p>
-        ) : null}
-
-        {challenge.status === "phone_confirmed" ? (
-          <div className="space-y-4">
-            <p className="text-sm text-text">
-              La confirmación telefónica ya llegó. Terminá la validación con passkey para autorizar esta operación.
-            </p>
+        {isActionable ? (
+          <div className="flex flex-col gap-3 sm:flex-row">
             <button
               type="button"
               onClick={handleVerify}
-              disabled={busy}
+              disabled={busy !== null}
               className="rounded-md border border-allow bg-allow/10 px-4 py-2 font-mono text-sm text-allow transition hover:bg-allow/20 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {busy ? "verificando…" : "Verificar con passkey"}
+              {busy === "verify" ? "verificando…" : "Aceptar — verificar con passkey"}
+            </button>
+            <button
+              type="button"
+              onClick={handleReject}
+              disabled={busy !== null}
+              className="rounded-md border border-deny bg-deny/10 px-4 py-2 font-mono text-sm text-deny transition hover:bg-deny/20 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {busy === "reject" ? "rechazando…" : "Rechazar"}
             </button>
           </div>
         ) : null}
@@ -166,7 +194,6 @@ export function StepUpVerificationCard({ initialChallenge }: StepUpVerificationC
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-3 text-xs text-muted">
-        <span>Canal: {challenge.deliveryChannel}</span>
         <span>Vence: {formatExpiry(challenge.expiresAt)}</span>
       </div>
 
@@ -182,9 +209,9 @@ export function StepUpVerificationCard({ initialChallenge }: StepUpVerificationC
 function statusLabel(status: StepUpChallengeView["status"]) {
   switch (status) {
     case "pending":
-      return "esperando llamada";
+      return "esperando confirmación";
     case "phone_confirmed":
-      return "listo para passkey";
+      return "esperando passkey";
     case "completed":
       return "completado";
     case "rejected":
