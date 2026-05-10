@@ -197,7 +197,7 @@ function hardPolicyViolations(
   }
 
   if (request.amount && request.amount.value > profile.maxAutonomousSpend.value * 4) {
-    violations.push("DENY: amount exceeds four times the user's autonomous spend ceiling.");
+    violations.push("STEP_UP: amount exceeds four times the user's autonomous spend ceiling.");
   }
 
   if (request.amount && graph.newCounterparty && request.amount.value > profile.maxAutonomousSpend.value) {

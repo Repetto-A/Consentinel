@@ -57,7 +57,7 @@ test("an aligned delegated transfer is lower risk than a recipient swap from unt
   assert.ok(novelDecision.signals.every((signal) => Number.isFinite(signal.contribution)));
 });
 
-test("a large amount spike is denied even when the recipient is familiar", () => {
+test("a large amount spike requires step-up even when the recipient is familiar", () => {
   const kernel = seededKernel();
   const request: AgentActionRequest = {
     requestId: "amount_spike",
@@ -82,7 +82,7 @@ test("a large amount spike is denied even when the recipient is familiar", () =>
 
   const decision = kernel.assess(request);
 
-  assert.equal(decision.outcome, "deny");
+  assert.equal(decision.outcome, "step_up");
   assert.ok(decision.signals.some((signal) => signal.name === "policy.hard_violation"));
 });
 
