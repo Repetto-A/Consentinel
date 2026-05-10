@@ -16,6 +16,8 @@ export type TechLineKind =
   | "decision"
   | "step_up_created"
   | "step_up_verified"
+  | "step_up_phone_confirmed"
+  | "step_up_rejected"
   | "step_up_canceled"
   | "wallet_prepared"
   | "wallet_executed"
@@ -290,6 +292,18 @@ function translateToTechLine(
           e.verifiedByUsername ? ` by ${e.verifiedByUsername}` : ""
         }`,
       };
+    case "step_up.phone_confirmed":
+      return {
+        ts: e.ts,
+        kind: "step_up_phone_confirmed",
+        text: `STEP-UP phone confirmed via ${e.channel} (${e.provider})`,
+      };
+    case "step_up.rejected":
+      return {
+        ts: e.ts,
+        kind: "step_up_rejected",
+        text: `STEP-UP rejected via ${e.channel} — ${e.reason}`,
+      };
     case "step_up.canceled":
       return {
         ts: e.ts,
@@ -319,6 +333,10 @@ function translateToTechLine(
         kind: "error",
         text: `ERROR: ${e.message}`,
       };
+    default: {
+      const _exhaustive: never = e;
+      return _exhaustive;
+    }
   }
 }
 
