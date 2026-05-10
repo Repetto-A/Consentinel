@@ -60,7 +60,7 @@ Respuesta:
   "channel": "voice_biometric_callback",
   "handoffCode": "AB4K-P9Q2",
   "deliveryChannel": "whatsapp",
-  "deliveryTarget": "+15550101111",
+  "deliveryTarget": "+12015348061",
   "userName": "alba",
   "actionPhrase": "enviar 20 USDC a Juan usando un destino nuevo",
   "spokenOperationSummary": "enviar 20 USDC a Juan",

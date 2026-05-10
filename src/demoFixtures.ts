@@ -11,7 +11,7 @@ export const demoProfile: UserTrustProfile = {
   trustedDevice: true,
   maxAutonomousSpend: { value: 75, currency: "USD" },
   preferredStepUp: "passkey",
-  phoneE164: "+15550101111"
+  phoneE164: "+12015348061"
 };
 
 export const seedEvents: TrackRecordEvent[] = [
