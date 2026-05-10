@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const ELEVENLABS_TTS_URL = "https://api.elevenlabs.io/v1/text-to-speech";
-const DEFAULT_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"; // Rachel — multilingual default
+const DEFAULT_VOICE_ID = "EXAVITQu4vr4xnSDxMaL"; // Sarah — premade, accessible on free tier
 const DEFAULT_MODEL_ID = "eleven_multilingual_v2";
 
 const kernelRuntime = getSharedKernelRuntime();
