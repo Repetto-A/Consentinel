@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "username required" }, { status: 400 });
   }
 
-  const user = getOrCreateUser(username);
+  const user = await getOrCreateUser(username);
 
   const options = await generateRegistrationOptions({
     rpName: RP_NAME,
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     },
   });
 
-  setChallenge(user.username, options.challenge);
+  await setChallenge(user.username, options.challenge);
 
   return NextResponse.json(options);
 }

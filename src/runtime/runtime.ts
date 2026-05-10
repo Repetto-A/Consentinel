@@ -12,8 +12,8 @@ import { PermissionKernel } from "../kernel";
 import type { IntentDriftEvaluator } from "../intent/intentDrift";
 import { RuntimeEventBus } from "./eventBus";
 import {
-  FileDurableEventRepository,
-  FilePendingStepUpRepository,
+  defaultDurableEventRepository,
+  defaultPendingStepUpRepository,
   type DurableEventRepository,
   type PendingStepUpRepository
 } from "./repositories";
@@ -57,8 +57,8 @@ export class KernelRuntime {
   private initPromise?: Promise<void>;
 
   constructor(options: KernelRuntimeOptions = {}) {
-    this.durableEvents = options.durableEvents ?? new FileDurableEventRepository();
-    this.pendingStepUps = options.pendingStepUps ?? new FilePendingStepUpRepository();
+    this.durableEvents = options.durableEvents ?? defaultDurableEventRepository();
+    this.pendingStepUps = options.pendingStepUps ?? defaultPendingStepUpRepository();
     this.eventBus = options.eventBus ?? new RuntimeEventBus();
     this.profile = options.profile ?? demoProfile;
     this.seedTrackEvents = options.seedTrackEvents ?? seedEvents;

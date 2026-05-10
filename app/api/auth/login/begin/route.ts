@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "username required" }, { status: 400 });
   }
 
-  const user = getUserByUsername(username);
+  const user = await getUserByUsername(username);
   if (!user || user.credentials.length === 0) {
     return NextResponse.json(
       { error: "no passkey registered for this user" },
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     userVerification: "preferred",
   });
 
-  setChallenge(user.username, options.challenge);
+  await setChallenge(user.username, options.challenge);
 
   return NextResponse.json(options);
 }

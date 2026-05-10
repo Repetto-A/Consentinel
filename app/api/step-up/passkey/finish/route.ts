@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "login required" }, { status: 401 });
   }
 
-  const user = getUserByUsername(session.username);
+  const user = await getUserByUsername(session.username);
   if (!user) {
     return NextResponse.json({ error: "unknown user" }, { status: 404 });
   }
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "no pending step-up challenge" }, { status: 400 });
   }
 
-  const credential = findCredentialById(user.username, body.response.id);
+  const credential = await findCredentialById(user.username, body.response.id);
   if (!credential) {
     return NextResponse.json({ error: "unknown credential" }, { status: 404 });
   }
@@ -65,7 +65,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "verification failed" }, { status: 400 });
   }
 
-  updateCredentialCounter(user.username, credential.id, verification.authenticationInfo.newCounter);
+  await updateCredentialCounter(user.username, credential.id, verification.authenticationInfo.newCounter);
 
   try {
     const resumed = await kernelRuntime.completeVerifiedStepUp(body.challengeId, user.username);

@@ -2,6 +2,10 @@ import { mkdir, readFile, appendFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import type { DurableRuntimeEvent, PendingStepUp } from "./types";
 import { normalizeHandoffCode } from "../stepup/presentation";
+import { getUpstashClient, isUpstashConfigured } from "../../lib/persist/upstash";
+
+const PENDING_STEPUPS_KEY = "consentinel:runtime:pending-stepups";
+const DURABLE_EVENTS_KEY = "consentinel:runtime:durable-events";
 
 function runtimeDataPath(...segments: string[]) {
   if (process.env.VERCEL || process.env.NOW_REGION) {
@@ -109,4 +113,45 @@ export class FilePendingStepUpRepository implements PendingStepUpRepository {
       throw error;
     }
   }
+}
+
+export class UpstashDurableEventRepository implements DurableEventRepository {
+  async list(): Promise<DurableRuntimeEvent[]> {
+    const items = await getUpstashClient().lrange(DURABLE_EVENTS_KEY, 0, -1);
+    return items as unknown as DurableRuntimeEvent[];
+  }
+
+  async append(event: DurableRuntimeEvent): Promise<void> {
+    await getUpstashClient().rpush(DURABLE_EVENTS_KEY, event);
+  }
+}
+
+export class UpstashPendingStepUpRepository implements PendingStepUpRepository {
+  async list(): Promise<PendingStepUp[]> {
+    const items = await getUpstashClient().hvals(PENDING_STEPUPS_KEY);
+    return items as PendingStepUp[];
+  }
+
+  async get(challengeId: string): Promise<PendingStepUp | undefined> {
+    const value = await getUpstashClient().hget(PENDING_STEPUPS_KEY, challengeId);
+    return (value as PendingStepUp | null) ?? undefined;
+  }
+
+  async getByHandoffCode(handoffCode: string): Promise<PendingStepUp | undefined> {
+    const items = await this.list();
+    const normalized = normalizeHandoffCode(handoffCode);
+    return items.find((item) => normalizeHandoffCode(item.handoffCode) === normalized);
+  }
+
+  async upsert(stepUp: PendingStepUp): Promise<void> {
+    await getUpstashClient().hset(PENDING_STEPUPS_KEY, { [stepUp.challengeId]: stepUp });
+  }
+}
+
+export function defaultDurableEventRepository(): DurableEventRepository {
+  return isUpstashConfigured() ? new UpstashDurableEventRepository() : new FileDurableEventRepository();
+}
+
+export function defaultPendingStepUpRepository(): PendingStepUpRepository {
+  return isUpstashConfigured() ? new UpstashPendingStepUpRepository() : new FilePendingStepUpRepository();
 }

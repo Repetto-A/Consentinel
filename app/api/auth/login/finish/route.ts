@@ -25,12 +25,12 @@ export async function POST(req: Request) {
     );
   }
 
-  const user = getUserByUsername(body.username);
+  const user = await getUserByUsername(body.username);
   if (!user) {
     return NextResponse.json({ error: "unknown user" }, { status: 404 });
   }
 
-  const expectedChallenge = consumeChallenge(body.username);
+  const expectedChallenge = await consumeChallenge(body.username);
   if (!expectedChallenge) {
     return NextResponse.json(
       { error: "no pending challenge" },
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const credential = findCredentialById(user.username, body.response.id);
+  const credential = await findCredentialById(user.username, body.response.id);
   if (!credential) {
     return NextResponse.json(
       { error: "unknown credential" },
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "verification failed" }, { status: 400 });
   }
 
-  updateCredentialCounter(
+  await updateCredentialCounter(
     user.username,
     credential.id,
     verification.authenticationInfo.newCounter

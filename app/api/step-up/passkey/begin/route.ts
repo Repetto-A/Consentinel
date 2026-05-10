@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "login required" }, { status: 401 });
   }
 
-  const user = getUserByUsername(session.username);
+  const user = await getUserByUsername(session.username);
   if (!user || user.credentials.length === 0) {
     return NextResponse.json({ error: "no passkey registered for this user" }, { status: 404 });
   }
