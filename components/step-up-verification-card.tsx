@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { startAuthentication } from "@simplewebauthn/browser";
 import type { StepUpChallengeView } from "@/lib/step-up/challenge-view";
 import { cn } from "@/lib/utils";
 
@@ -53,32 +52,18 @@ export function StepUpVerificationCard({ initialChallenge }: StepUpVerificationC
     setError(null);
 
     try {
-      const beginRes = await fetch("/api/step-up/passkey/begin", {
+      const res = await fetch("/api/step-up/passkey/approve", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ challengeId: challenge.challengeId })
       });
 
-      if (!beginRes.ok) {
-        const err = await beginRes.json().catch(() => ({}));
-        throw new Error(err.error || "no se pudo iniciar la verificacion");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "no se pudo aprobar el permiso");
       }
 
-      const options = await beginRes.json();
-      const credential = await startAuthentication(options);
-
-      const finishRes = await fetch("/api/step-up/passkey/finish", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ challengeId: challenge.challengeId, response: credential })
-      });
-
-      if (!finishRes.ok) {
-        const err = await finishRes.json().catch(() => ({}));
-        throw new Error(err.error || "la verificacion con passkey fallo");
-      }
-
-      const finished = (await finishRes.json()) as {
+      const finished = (await res.json()) as {
         resumed?: { status?: string };
       };
       setResumedStatus(finished.resumed?.status ?? null);
@@ -143,7 +128,7 @@ export function StepUpVerificationCard({ initialChallenge }: StepUpVerificationC
           </p>
         ) : null}
         <p className="text-sm text-muted">
-          Confirmá con tu passkey si querés autorizar esta operación. Si no fuiste vos quien la pidió, rechazala.
+          Ya te identificaste con passkey al entrar. Aprobá si reconocés esta operación, o rechazala si no fuiste vos.
         </p>
       </div>
 
@@ -156,7 +141,7 @@ export function StepUpVerificationCard({ initialChallenge }: StepUpVerificationC
               disabled={busy !== null}
               className="rounded-md border border-allow bg-allow/10 px-4 py-2 font-mono text-sm text-allow transition hover:bg-allow/20 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {busy === "verify" ? "verificando…" : "Aceptar — verificar con passkey"}
+              {busy === "verify" ? "aprobando…" : "Aceptar"}
             </button>
             <button
               type="button"
