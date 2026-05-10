@@ -24,7 +24,7 @@ function makeRuntime(tempDir: string) {
   });
 }
 
-test("remote MCP route supports initialize and tools/list over streamable HTTP", async () => {
+test("remote MCP route handles initialize and tools/list statelessly", async () => {
   const tempDir = mkdtempSync(join(tmpdir(), "mcp-route-"));
   globalThis.__consentinelRuntime = makeRuntime(tempDir);
   await resetMcpSessions();
@@ -54,30 +54,11 @@ test("remote MCP route supports initialize and tools/list over streamable HTTP",
   );
 
   assert.equal(initializeResponse.status, 200);
-  const sessionId = initializeResponse.headers.get("mcp-session-id");
-  assert.ok(sessionId);
+  // Stateless mode: server must NOT issue a session ID.
+  assert.equal(initializeResponse.headers.get("mcp-session-id"), null);
 
   const initializeBody = await initializeResponse.json();
   assert.equal(initializeBody.result.serverInfo.name, "platanus-agent-permission-kernel");
-
-  const initializedResponse = await POST(
-    new Request("http://localhost:3000/api/mcp", {
-      method: "POST",
-      headers: {
-        accept: "application/json, text/event-stream",
-        authorization: "Bearer test-mcp-token",
-        "content-type": "application/json",
-        "mcp-protocol-version": DEFAULT_NEGOTIATED_PROTOCOL_VERSION,
-        "mcp-session-id": sessionId
-      },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        method: "notifications/initialized"
-      })
-    })
-  );
-
-  assert.equal(initializedResponse.status, 202);
 
   const listToolsResponse = await POST(
     new Request("http://localhost:3000/api/mcp", {
@@ -86,8 +67,7 @@ test("remote MCP route supports initialize and tools/list over streamable HTTP",
         accept: "application/json, text/event-stream",
         authorization: "Bearer test-mcp-token",
         "content-type": "application/json",
-        "mcp-protocol-version": DEFAULT_NEGOTIATED_PROTOCOL_VERSION,
-        "mcp-session-id": sessionId
+        "mcp-protocol-version": DEFAULT_NEGOTIATED_PROTOCOL_VERSION
       },
       body: JSON.stringify({
         jsonrpc: "2.0",
@@ -106,7 +86,6 @@ test("remote MCP route supports initialize and tools/list over streamable HTTP",
     listToolsBody.result.tools.some((tool: { name: string }) => tool.name === "platanus_confirm_phone_step_up")
   );
 
-  await resetMcpSessions();
   globalThis.__consentinelRuntime = undefined;
   rmSync(tempDir, { recursive: true, force: true });
 });

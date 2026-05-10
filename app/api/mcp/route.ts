@@ -1,4 +1,4 @@
-import { getOrCreateMcpSession } from "@/lib/mcp/sessions";
+import { handleStatelessMcpRequest } from "@/lib/mcp/sessions";
 import { requireMcpServerAuth } from "@/lib/mcp/server-auth";
 
 export const runtime = "nodejs";
@@ -38,13 +38,9 @@ async function handleMcpRequest(req: Request) {
   }
 
   try {
-    const session = await getOrCreateMcpSession(req.headers.get("mcp-session-id"));
-    const response = await session.transport.handleRequest(req);
+    const response = await handleStatelessMcpRequest(req);
     return withCors(response);
   } catch (error) {
-    if (error instanceof Error && error.message === "session_not_found") {
-      return withCors(jsonError(404, "MCP session not found"));
-    }
     return withCors(jsonError(500, error instanceof Error ? error.message : "unexpected MCP error"));
   }
 }
