@@ -48,7 +48,6 @@ export interface PendingStepUp extends StepUpChallenge {
   verifiedAt?: string;
   verifiedByUsername?: string;
   completedAt?: string;
-  completedAt?: string;
   rejectedAt?: string;
   rejectedReason?: StepUpRejectionReason;
   canceledAt?: string;
