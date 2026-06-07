@@ -1,6 +1,8 @@
-# Platanus Agent Permission Kernel
+# Consentinel — Agent Permission Kernel
 
 An agent-first middleware for dynamic permissions.
+
+> Built at **Platanus Hack 2026** · [Live demo](https://consentinel-gold.vercel.app)
 
 Static scopes do not work well for autonomous agents. Either the user grants a permanent master key, or the agent gets blocked every few minutes. Platanus sits between the agent and the action to decide whether a requested operation looks reasonable for this user, this context, and this track record.
 

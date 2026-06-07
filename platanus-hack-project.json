@@ -1,5 +1,0 @@
-{
-  "project-name": "Consentinel",
-  "project-oneliner-spanish": "Middleware de permisos dinamicos para agentes autonomos con step-up biomedico contextual.",
-  "project-description-spanish": "Consentinel se interpone entre un agente y sus acciones para decidir si una operacion sigue siendo viable segun el historial del usuario, el contexto y el permiso delegado. Usa grafo de comportamiento, memoria vectorial y un motor de riesgo explicable para permitir, escalar a validacion biometrica puntual o denegar."
-}
